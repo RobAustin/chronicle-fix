@@ -1,14 +1,25 @@
 package com.ryanlea.fix.chronicle.spec;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class FieldDefinition {
 
-    private int number;
+    private final int number;
 
-    private String name;
+    private final String name;
 
-    private boolean required;
+    private final boolean required;
+
+    private final List<ValueDefinition> values = new ArrayList<ValueDefinition>();
 
     public FieldDefinition(int number, String name, boolean required) {
-        //To change body of created methods use File | Settings | File Templates.
+        this.number = number;
+        this.name = name;
+        this.required = required;
+    }
+
+    public void addValue(ValueDefinition valueDefinition) {
+        values.add(valueDefinition);
     }
 }

@@ -23,6 +23,8 @@ public class StaxFixSpecParser {
         elementHandlers.put("trailer", new TrailerElementHandler());
         elementHandlers.put("field", new FieldElementHandler());
         elementHandlers.put("message", new MessageElementHandler());
+        elementHandlers.put("group", new GroupElementHandler());
+        elementHandlers.put("value", new ValueElementHandler());
     }
 
     public FixSpec parse(InputStream inputStream) {
@@ -36,17 +38,26 @@ public class StaxFixSpecParser {
             while (reader.hasNext()) {
                 final int event = reader.next();
                 switch (event) {
-                    case XMLEvent.START_ELEMENT:
+                    case XMLEvent.START_ELEMENT: {
                         final String elementName = reader.getLocalName();
                         ElementHandler elementHandler = elementHandlers.get(elementName);
                         if (elementHandler != null) {
-                            elementHandler.handle(context);
+                            elementHandler.handleStart(context);
                         } else {
                             // report an error
                         }
                         break;
-                    case XMLStreamConstants.END_ELEMENT:
+                    }
+                    case XMLStreamConstants.END_ELEMENT: {
+                        final String elementName = reader.getLocalName();
+                        ElementHandler elementHandler = elementHandlers.get(elementName);
+                        if (elementHandler != null) {
+                            elementHandler.handleEnd(context);
+                        } else {
+                            // report an error
+                        }
                         break;
+                    }
                     case XMLStreamConstants.ATTRIBUTE:
                         break;
                 }
@@ -60,12 +71,14 @@ public class StaxFixSpecParser {
 
     private static interface ElementHandler {
 
-        void handle(ParsingContext context);
+        void handleStart(ParsingContext context);
+
+        void handleEnd(ParsingContext context);
     }
 
     private static class FixElementHandler implements ElementHandler {
 
-        public void handle(ParsingContext context) {
+        public void handleStart(ParsingContext context) {
             final XMLStreamReader reader = context.reader;
             int major = Integer.parseInt(reader.getAttributeValue(null, "major"));
             int minor = Integer.parseInt(reader.getAttributeValue(null, "minor"));
@@ -73,35 +86,55 @@ public class StaxFixSpecParser {
             final FixSpec fixSpec = new FixSpec();
             fixSpec.setMajor(major);
             fixSpec.setMinor(minor);
+            context.fixSpec = fixSpec;
+        }
+
+        public void handleEnd(ParsingContext context) {
+            //To change body of implemented methods use File | Settings | File Templates.
         }
     }
 
     private static class HeaderElementHandler implements ElementHandler {
 
-        public void handle(ParsingContext context) {
+        public void handleStart(ParsingContext context) {
             HeaderDefinition headerDefinition = new HeaderDefinition();
             context.fixSpec.setHeaderDefinition(headerDefinition);
+            context.push(headerDefinition);
+        }
+
+        public void handleEnd(ParsingContext context) {
+            context.pop();
         }
     }
 
     private static class TrailerElementHandler implements ElementHandler {
 
-        public void handle(ParsingContext context) {
+        public void handleStart(ParsingContext context) {
             TrailerDefinition trailerDefinition = new TrailerDefinition();
             context.fixSpec.setTrailerDefinition(trailerDefinition);
+            context.push(trailerDefinition);
+        }
+
+        public void handleEnd(ParsingContext context) {
+            context.pop();
         }
     }
 
     private static class MessageElementHandler implements ElementHandler {
 
-        public void handle(ParsingContext context) {
-            //To change body of implemented methods use File | Settings | File Templates.
+        public void handleStart(ParsingContext context) {
+            MessageDefinition messageDefinition = new MessageDefinition();
+            context.push(messageDefinition);
+        }
+
+        public void handleEnd(ParsingContext context) {
+            context.pop();
         }
     }
 
     private static class FieldElementHandler implements ElementHandler {
 
-        public void handle(ParsingContext context) {
+        public void handleStart(ParsingContext context) {
             final XMLStreamReader reader = context.reader;
             String number = reader.getAttributeValue(null, "number");
             String name = reader.getAttributeValue(null, "name");
@@ -112,6 +145,7 @@ public class StaxFixSpecParser {
                 // handle as a FieldDefinition
                 FieldDefinition fieldDefinition = new FieldDefinition(Integer.parseInt(number), name, required);
                 context.fixSpec.addFieldDefinition(fieldDefinition);
+                context.push(fieldDefinition);
             } else {
                 // handle as a FieldReference
                 FieldReference fieldReference = new FieldReference(name, required);
@@ -119,6 +153,47 @@ public class StaxFixSpecParser {
                 EntityDefinition entityDefinition = context.peek(EntityDefinition.class);
                 entityDefinition.addFieldReference(fieldReference);
             }
+        }
+
+        public void handleEnd(ParsingContext context) {
+            context.popIf(FieldDefinition.class);
+        }
+    }
+
+    private static class GroupElementHandler implements ElementHandler {
+
+        public void handleStart(ParsingContext context) {
+            final XMLStreamReader reader = context.reader;
+            String name = reader.getAttributeValue(null, "name");
+            String requiredValue = reader.getAttributeValue(null, "required");
+            boolean required = requiredValue != null && "Y".equals(requiredValue);
+
+            final GroupDefinition groupDefinition = new GroupDefinition(name, required);
+            final EntityDefinition owner = context.peek(EntityDefinition.class);
+            owner.addGroupDefinition(groupDefinition);
+            context.push(groupDefinition);
+        }
+
+        public void handleEnd(ParsingContext context) {
+            context.popIf(FieldDefinition.class);
+        }
+    }
+
+    private static class ValueElementHandler implements ElementHandler {
+
+        public void handleStart(ParsingContext context) {
+            final XMLStreamReader reader = context.reader;
+            String enumValue = reader.getAttributeValue(null, "enum");
+            String description = reader.getAttributeValue(null, "description");
+
+            final ValueDefinition valueDefinition = new ValueDefinition(enumValue, description);
+
+            FieldDefinition fieldDefinition = context.peek(FieldDefinition.class);
+            fieldDefinition.addValue(valueDefinition);
+        }
+
+        public void handleEnd(ParsingContext context) {
+            //To change body of implemented methods use File | Settings | File Templates.
         }
     }
 
@@ -141,13 +216,23 @@ public class StaxFixSpecParser {
             stack.push(obj);
         }
 
-        private <T> T pop(Class<T> clazz) {
-            return (T) stack.pop();
+        private void pop() {
+            if (stack.isEmpty()) {
+                return;
+            }
+            stack.pop();
         }
 
         private <T> T peek(Class<T> clazz) {
             return (T) stack.peek();
         }
 
+        public <T> T popIf(Class<T> aClass) {
+            final Object item = stack.peek();
+            if (aClass.isAssignableFrom(item.getClass())) {
+                return (T) stack.pop();
+            }
+            return null;
+        }
     }
 }
