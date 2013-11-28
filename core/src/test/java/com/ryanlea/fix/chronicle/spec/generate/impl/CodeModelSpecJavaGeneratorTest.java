@@ -37,7 +37,7 @@ public class CodeModelSpecJavaGeneratorTest {
     public void generate() throws IOException {
         CodeModelSpecJavaGenerator generator = new CodeModelSpecJavaGenerator();
         generator.setDestDir(temporaryFolder.getRoot());
-        generator.setDestPackage("com.ryanlea.fix.chronicle.message");
+        generator.setBasePackage("com.ryanlea.fix.chronicle.message");
         generator.generate(fixSpec);
 
         Files.walkFileTree(temporaryFolder.getRoot().toPath(), new FileVisitor<Path>() {

@@ -1,0 +1,62 @@
+<fix major="4" minor="4">
+    <header>
+        <field name="BeginString" required="Y"/>
+        <field name="BodyLength" required="Y"/>
+        <field name="MsgType" required="Y"/>
+        <field name="SenderCompID" required="Y"/>
+        <field name="TargetCompID" required="Y"/>
+        <field name="MsgSeqNum" required="Y"/>
+        <field name="SendingTime" required="Y"/>
+    </header>
+    <trailer>
+        <field name="CheckSum" required="Y"/>
+    </trailer>
+    <messages>
+        <message name="MarketDataRequest" msgtype="V" msgcat="app">
+            <field name="MDReqID" required="Y"/>
+            <field name="SubscriptionRequestType" required="Y"/>
+            <group name="NoPartyIDs" required="N">
+                <field name="PartyID" required="Y"/>
+                <field name="PartyIDSource" required="Y"/>
+                <field name="PartyRole" required="Y"/>
+            </group>
+            <group name="NoRelatedSym" required="Y">
+                <field name="Symbol" required="Y"/>
+            </group>
+            <field name="MarketDepth" required="N"/>
+            <field name="MDUpdateType" required="Y"/>
+            <group name="NoRequestedSize" required="N">
+                <field name="RequestedSize" required="N"/>
+            </group>
+        </message>
+    </messages>
+    <fields>
+        <field number="8" name="BeginString" type="String"/>
+        <field number="9" name="BodyLength" type="Length"/>
+        <field number="10" name="CheckSum" type="String"/>
+        <field number="34" name="MsgSeqNum" type="SeqNum"/>
+        <field number="35" name="MsgType" type="String">
+            <value enum="0" description="Heartbeat"/>
+            <value enum="1" description="Test Request"/>
+            <value enum="A" description="Logon"/>
+            <value enum="V" description="Market Data Request"/>
+            <value enum="W" description="Market Data-Snapshot/Full Refresh"/>
+            <value enum="X" description="Market Data-Incremental Refresh"/>
+        </field>
+        <field number="49" name="SenderCompID" type="String"/>
+        <field number="52" name="SendingTime" type="UTCTimestamp"/>
+        <field number="55" name="Symbol" type="String"/>
+        <field number="56" name="TargetCompID" type="String"/>
+        <field number="146" name="NoRelatedSym" type="NumInGroup"/>
+        <field number="262" name="MDReqID" type="String"/>
+        <field number="263" name="SubscriptionRequestType" type="char"/>
+        <field number="448" name="PartyID" type="String"/>
+        <field number="447" name="PartyIDSource" type="char"/>
+        <field number="452" name="PartyRole" type="int"/>
+        <field number="453" name="NoPartyIDs" type="NumInGroup"/>
+        <field number="264" name="MarketDepth" type="int"/>
+        <field number="265" name="MDUpdateType" type="int"/>
+        <field number="9000" name="NoRequestedSize" type="NumInGroup"/>
+        <field number="9001" name="RequestedSize" type="Qty"/>
+    </fields>
+</fix>

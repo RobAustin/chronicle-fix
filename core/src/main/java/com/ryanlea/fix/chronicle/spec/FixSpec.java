@@ -1,5 +1,8 @@
 package com.ryanlea.fix.chronicle.spec;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,7 +17,9 @@ public class FixSpec {
     private TrailerDefinition trailerDefinition;
     private List<FieldDefinition> fieldDefinitions = new ArrayList<FieldDefinition>();
     private List<MessageDefinition> messageDefinitions = new ArrayList<MessageDefinition>();
+    private TIntObjectMap<MessageDefinition> messageDefinitionsByType = new TIntObjectHashMap();
     private Map<String, FieldDefinition> fieldDefinitionsByName = new HashMap<String, FieldDefinition>();
+    private TIntObjectMap<FieldDefinition> fieldDefinitionsByNumber = new TIntObjectHashMap<>();
 
     public int getMajor() {
         return major;
@@ -71,6 +76,19 @@ public class FixSpec {
     public void init() {
         for (FieldDefinition fieldDefinition : fieldDefinitions) {
             fieldDefinitionsByName.put(fieldDefinition.getName(), fieldDefinition);
+            fieldDefinitionsByNumber.put(fieldDefinition.getNumber(), fieldDefinition);
         }
+
+        for (MessageDefinition messageDefinition : messageDefinitions) {
+            messageDefinitionsByType.put(messageDefinition.getType().hashCode(), messageDefinition);
+        }
+    }
+
+    public FieldDefinition getFieldDefinition(int tag) {
+        return fieldDefinitionsByNumber.get(tag);
+    }
+
+    public MessageDefinition getMessageDefinition(String messageType) {
+        return messageDefinitionsByType.get(messageType.hashCode());
     }
 }

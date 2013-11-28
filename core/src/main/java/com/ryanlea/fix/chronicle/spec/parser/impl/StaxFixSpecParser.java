@@ -151,7 +151,7 @@ public class StaxFixSpecParser implements FixSpecParser {
             if (number != null && !number.trim().isEmpty()) {
                 // handle as a FieldDefinition
                 String type = reader.getAttributeValue(null, "type");
-                FieldDefinition fieldDefinition = new FieldDefinition(Integer.parseInt(number), name, type);
+                FieldDefinition fieldDefinition = new FieldDefinition(Integer.parseInt(number), name, FieldType.fromString(type));
                 context.fixSpec.addFieldDefinition(fieldDefinition);
                 context.push(fieldDefinition);
             } else {

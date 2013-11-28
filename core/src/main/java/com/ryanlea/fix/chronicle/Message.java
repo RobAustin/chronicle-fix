@@ -14,4 +14,11 @@ public abstract class Message extends Fields {
         return groups.get(fid);
     }
 
+    public Header getHeader() {
+        return header;
+    }
+
+    public Trailer getTrailer() {
+        return trailer;
+    }
 }

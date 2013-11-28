@@ -4,4 +4,6 @@ public interface EntityDefinition {
 
     void addFieldReference(FieldReference fieldReference);
 
+    boolean hasField(int tag);
+
 }

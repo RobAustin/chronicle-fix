@@ -16,22 +16,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.sun.codemodel.JExpr._super;
+import static com.sun.codemodel.JExpr.cast;
 import static com.sun.codemodel.JExpr.lit;
 
 public class CodeModelSpecJavaGenerator implements SpecJavaGenerator {
 
     private static final Logger log = LoggerFactory.getLogger(CodeModelSpecJavaGenerator.class);
 
-    private static final Map<String, TypeMapping> typeMappings = new HashMap<String, TypeMapping>();
+    private static final Map<FieldType, TypeMapping> typeMappings = new HashMap<>();
 
     static {
-        typeMappings.put("String", new TypeMapping(CharSequence.class, "_string"));
-        typeMappings.put("Length", new TypeMapping(int.class, "_int"));
-        typeMappings.put("UTCTimestamp", new TypeMapping(ReadableInstant.class, "_dateTime"));
-        typeMappings.put("SeqNum", new TypeMapping(long.class, "_long"));
-        typeMappings.put("char", new TypeMapping(char.class, "_char"));
-        typeMappings.put("int", new TypeMapping(int.class, "_int"));
-        typeMappings.put("Qty", new TypeMapping(Number.class, "_decimal"));
+        typeMappings.put(FieldType.STRING, new TypeMapping(CharSequence.class, "_string"));
+        typeMappings.put(FieldType.LENGTH, new TypeMapping(int.class, "_int"));
+        typeMappings.put(FieldType.U_T_C_TIMESTAMP, new TypeMapping(ReadableInstant.class, "_dateTime"));
+        typeMappings.put(FieldType.SEQ_NUM, new TypeMapping(long.class, "_long"));
+        typeMappings.put(FieldType.CHAR, new TypeMapping(char.class, "_char"));
+        typeMappings.put(FieldType.INT, new TypeMapping(int.class, "_int"));
+        typeMappings.put(FieldType.QTY, new TypeMapping(Number.class, "_decimal"));
     }
 
     private File destDir;
@@ -42,7 +43,7 @@ public class CodeModelSpecJavaGenerator implements SpecJavaGenerator {
         this.destDir = destDir;
     }
 
-    public void setDestPackage(String destPackage) {
+    public void setBasePackage(String destPackage) {
         this.destPackage = destPackage;
     }
 
@@ -88,13 +89,13 @@ public class CodeModelSpecJavaGenerator implements SpecJavaGenerator {
                     final FieldDefinition fieldDefinition = fixSpec.getFieldDefinition(messageFieldReference);
                     final String getterMethod = generateGetterMethodName(fieldDefinition);
                     JMethod method = messageClass.method(JMod.PUBLIC, groupClass, getterMethod);
-                    method.body()._return(_super().invoke("_group").arg(lit(fieldDefinition.getNumber())));
+                    method.body()._return(cast(groupClass, _super().invoke("_group").arg(lit(fieldDefinition.getNumber()))));
 
                     for (FieldReference groupFieldReference : groupDefinition.getFieldReferences()) {
-                        addGetterForFieldReference(fixSpec, groupClass, groupFieldReference);
+                        addGetterForFieldReference(fixSpec, groupClass, groupFieldReference, true);
                     }
                 } else {
-                    addGetterForFieldReference(fixSpec, messageClass, messageFieldReference);
+                    addGetterForFieldReference(fixSpec, messageClass, messageFieldReference, false);
                 }
             }
         }
@@ -105,18 +106,24 @@ public class CodeModelSpecJavaGenerator implements SpecJavaGenerator {
         headerClass._extends(Header.class);
 
         for (FieldReference fieldReference : fixSpec.getHeaderDefinition().getFieldReferences()) {
-            addGetterForFieldReference(fixSpec, headerClass, fieldReference);
+            addGetterForFieldReference(fixSpec, headerClass, fieldReference, false);
         }
     }
 
-    private void addGetterForFieldReference(FixSpec fixSpec, JDefinedClass definedClass, FieldReference fieldReference) {
+    private void addGetterForFieldReference(FixSpec fixSpec, JDefinedClass definedClass, FieldReference fieldReference, boolean indexMethod) {
         final FieldDefinition fieldDefinition = fixSpec.getFieldDefinition(fieldReference);
-        final String type = fieldDefinition.getType();
+        final FieldType type = fieldDefinition.getType();
         final String getterMethod = generateGetterMethodName(fieldDefinition);
         final TypeMapping typeMapping = typeMappings.get(type);
         if (typeMapping != null) {
             JMethod method = definedClass.method(JMod.PUBLIC, typeMapping.returnType, getterMethod);
-            method.body()._return(_super().invoke(typeMapping.methodCall).arg(lit(fieldDefinition.getNumber())));
+            JInvocation invocation = _super().invoke(typeMapping.methodCall);
+            if (indexMethod) {
+                JVar idx = method.param(int.class, "idx");
+                invocation.arg(idx);
+            }
+            invocation.arg(lit(fieldDefinition.getNumber()));
+            method.body()._return(invocation);
         } else {
             log.warn("Failed to find TypeMapping for type: {}", type);
         }

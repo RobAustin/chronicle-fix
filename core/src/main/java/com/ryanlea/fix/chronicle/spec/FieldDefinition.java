@@ -9,11 +9,11 @@ public class FieldDefinition {
 
     private final String name;
 
-    private final String type;
+    private final FieldType type;
 
     private final List<ValueDefinition> values = new ArrayList<ValueDefinition>();
 
-    public FieldDefinition(int number, String name, String type) {
+    public FieldDefinition(int number, String name, FieldType type) {
         this.number = number;
         this.name = name;
         this.type = type;
@@ -31,7 +31,7 @@ public class FieldDefinition {
         return name;
     }
 
-    public String getType() {
+    public FieldType getType() {
         return type;
     }
 
