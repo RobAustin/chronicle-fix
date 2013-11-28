@@ -1,7 +1,7 @@
 package com.ryanlea.fix.chronicle.spec.parser.impl;
 
-import com.ryanlea.fix.chronicle.spec.*;
 import com.ryanlea.fix.chronicle.spec.parser.FixSpecParser;
+import com.ryanlea.fix.chronicle.spec.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

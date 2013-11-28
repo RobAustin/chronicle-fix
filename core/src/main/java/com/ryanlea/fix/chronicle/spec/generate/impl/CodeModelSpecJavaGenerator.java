@@ -1,5 +1,8 @@
 package com.ryanlea.fix.chronicle.spec.generate.impl;
 
+import com.ryanlea.fix.chronicle.Group;
+import com.ryanlea.fix.chronicle.Header;
+import com.ryanlea.fix.chronicle.Message;
 import com.ryanlea.fix.chronicle.spec.*;
 import com.ryanlea.fix.chronicle.spec.generate.SpecJavaGenerator;
 import com.sun.codemodel.*;
@@ -72,7 +75,7 @@ public class CodeModelSpecJavaGenerator implements SpecJavaGenerator {
     private void generateMessages(FixSpec fixSpec, JCodeModel codeModel, String versionPackage) throws JClassAlreadyExistsException {
         for (MessageDefinition messageDefinition : fixSpec.messageDefinitions()) {
             JDefinedClass messageClass = codeModel._class(versionPackage + '.' +  messageDefinition.getName());
-            messageClass._extends(com.ryanlea.fix.chronicle.Message.class);
+            messageClass._extends(Message.class);
 
             Iterable<? extends FieldReference> fieldReferences = messageDefinition.getFieldReferences();
 
@@ -80,7 +83,7 @@ public class CodeModelSpecJavaGenerator implements SpecJavaGenerator {
                 if (messageFieldReference instanceof GroupDefinition) {
                     GroupDefinition groupDefinition = (GroupDefinition) messageFieldReference;
                     JDefinedClass groupClass = messageClass._class(JMod.PUBLIC | JMod.STATIC, messageFieldReference.getName());
-                    groupClass._extends(com.ryanlea.fix.chronicle.Group.class);
+                    groupClass._extends(Group.class);
 
                     final FieldDefinition fieldDefinition = fixSpec.getFieldDefinition(messageFieldReference);
                     final String getterMethod = generateGetterMethodName(fieldDefinition);
@@ -99,7 +102,7 @@ public class CodeModelSpecJavaGenerator implements SpecJavaGenerator {
 
     private void generateHeader(FixSpec fixSpec, JCodeModel codeModel, String versionPackage) throws JClassAlreadyExistsException {
         JDefinedClass headerClass = codeModel._class(versionPackage + ".Header");
-        headerClass._extends(com.ryanlea.fix.chronicle.Header.class);
+        headerClass._extends(Header.class);
 
         for (FieldReference fieldReference : fixSpec.getHeaderDefinition().getFieldReferences()) {
             addGetterForFieldReference(fixSpec, headerClass, fieldReference);
