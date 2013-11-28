@@ -1,4 +1,6 @@
-package com.ryanlea.fix.chronicle.spec;
+package com.ryanlea.fix.chronicle.spec.parser;
+
+import com.ryanlea.fix.chronicle.spec.FixSpec;
 
 import java.io.InputStream;
 

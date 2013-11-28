@@ -7,6 +7,16 @@ public class FieldReference {
     private boolean required;
 
     public FieldReference(String name, boolean required) {
-        //To change body of created methods use File | Settings | File Templates.
+        this.name = name;
+        this.required = required;
     }
+
+    public String getName() {
+        return name;
+    }
+
+    public boolean isRequired() {
+        return required;
+    }
+
 }

@@ -9,17 +9,33 @@ public class FieldDefinition {
 
     private final String name;
 
-    private final boolean required;
+    private final String type;
 
     private final List<ValueDefinition> values = new ArrayList<ValueDefinition>();
 
-    public FieldDefinition(int number, String name, boolean required) {
+    public FieldDefinition(int number, String name, String type) {
         this.number = number;
         this.name = name;
-        this.required = required;
+        this.type = type;
     }
 
     public void addValue(ValueDefinition valueDefinition) {
         values.add(valueDefinition);
+    }
+
+    public int getNumber() {
+        return number;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public Iterable<ValueDefinition> getValues() {
+        return values;
     }
 }

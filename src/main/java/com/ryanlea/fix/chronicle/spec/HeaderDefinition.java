@@ -11,7 +11,7 @@ public class HeaderDefinition implements EntityDefinition {
         fields.add(fieldReference);
     }
 
-    public void addGroupDefinition(GroupDefinition groupDefinition) {
-        // could throw an exception instead here - groups aren't allowed in headers traditionally
+    public Iterable<? extends FieldReference> getFieldReferences() {
+        return fields;
     }
 }

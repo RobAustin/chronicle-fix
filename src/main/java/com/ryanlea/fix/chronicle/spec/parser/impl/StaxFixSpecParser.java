@@ -1,6 +1,7 @@
-package com.ryanlea.fix.chronicle.spec.impl;
+package com.ryanlea.fix.chronicle.spec.parser.impl;
 
 import com.ryanlea.fix.chronicle.spec.*;
+import com.ryanlea.fix.chronicle.spec.parser.FixSpecParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
-public class StaxFixSpecParser {
+public class StaxFixSpecParser implements FixSpecParser {
 
     private static final Logger log = LoggerFactory.getLogger(StaxFixSpecParser.class);
 
@@ -63,6 +64,7 @@ public class StaxFixSpecParser {
                 }
             }
             fixSpec = context.fixSpec;
+            fixSpec.init();
         } catch (XMLStreamException e) {
             log.error("Failed to created xml stream reader.", e);
         }
@@ -123,7 +125,12 @@ public class StaxFixSpecParser {
     private static class MessageElementHandler implements ElementHandler {
 
         public void handleStart(ParsingContext context) {
-            MessageDefinition messageDefinition = new MessageDefinition();
+            final XMLStreamReader reader = context.reader;
+            String name = reader.getAttributeValue(null, "name");
+            String type = reader.getAttributeValue(null, "msgtype");
+            String category = reader.getAttributeValue(null, "msgcat");
+            MessageDefinition messageDefinition = new MessageDefinition(name, type, category);
+            context.fixSpec.addMessageDefinition(messageDefinition);
             context.push(messageDefinition);
         }
 
@@ -143,7 +150,8 @@ public class StaxFixSpecParser {
 
             if (number != null && !number.trim().isEmpty()) {
                 // handle as a FieldDefinition
-                FieldDefinition fieldDefinition = new FieldDefinition(Integer.parseInt(number), name, required);
+                String type = reader.getAttributeValue(null, "type");
+                FieldDefinition fieldDefinition = new FieldDefinition(Integer.parseInt(number), name, type);
                 context.fixSpec.addFieldDefinition(fieldDefinition);
                 context.push(fieldDefinition);
             } else {
@@ -170,12 +178,12 @@ public class StaxFixSpecParser {
 
             final GroupDefinition groupDefinition = new GroupDefinition(name, required);
             final EntityDefinition owner = context.peek(EntityDefinition.class);
-            owner.addGroupDefinition(groupDefinition);
+            owner.addFieldReference(groupDefinition);
             context.push(groupDefinition);
         }
 
         public void handleEnd(ParsingContext context) {
-            context.popIf(FieldDefinition.class);
+            context.popIf(GroupDefinition.class);
         }
     }
 
