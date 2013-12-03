@@ -4,7 +4,7 @@ import com.ryanlea.fix.chronicle.Message;
 import com.ryanlea.fix.chronicle.MessageHandler;
 import com.ryanlea.fix.chronicle.Router;
 import com.ryanlea.fix.chronicle.parser.MessageParser;
-import com.ryanlea.fix.chronicle.parser.impl.SimpleMessageParser;
+import com.ryanlea.fix.chronicle.parser.impl.SimpleFIXTextMessageParser;
 import com.ryanlea.fix.chronicle.pool.MessagePool;
 import com.ryanlea.fix.chronicle.spec.FixSpec;
 import com.ryanlea.fix.chronicle.spec.parser.FixSpecParser;
@@ -34,10 +34,10 @@ public class SimpleRouterMain {
         try {
             FixSpecParser fixSpecParser = new StaxFixSpecParser();
             FixSpec fixSpec = fixSpecParser.parse(SimpleRouterMain.class.getResourceAsStream(fixSpecResource));
-            MessagePool messagePool = new SimpleMessagePool();
+            MessagePool messagePool = new SimpleMessagePool(fixSpec);
             Chronicle chronicle = new IndexedChronicle(basePath, ChronicleConfig.TEST);
             loadMessages(chronicle);
-            MessageParser messageParser = new SimpleMessageParser(fixSpec, messagePool);
+            MessageParser messageParser = new SimpleFIXTextMessageParser(fixSpec, messagePool);
             Router router = new Router(chronicle, messageParser);
             router.registerMessageHandler(new MessageHandler() {
                 public void handle(Message message) {

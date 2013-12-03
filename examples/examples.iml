@@ -19,6 +19,9 @@
     <orderEntry type="library" name="Maven: com.sun.codemodel:codemodel:2.6" level="project" />
     <orderEntry type="library" name="Maven: net.sf.trove4j:trove4j:3.0.3" level="project" />
     <orderEntry type="library" name="Maven: joda-time:joda-time:2.2" level="project" />
+    <orderEntry type="library" name="Maven: com.google.guava:guava:15.0" level="project" />
+    <orderEntry type="library" name="Maven: ch.qos.logback:logback-classic:1.0.13" level="project" />
+    <orderEntry type="library" name="Maven: ch.qos.logback:logback-core:1.0.13" level="project" />
   </component>
 </module>
 

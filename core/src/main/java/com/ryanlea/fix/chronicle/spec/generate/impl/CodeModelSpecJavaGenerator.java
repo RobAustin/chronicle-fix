@@ -3,6 +3,7 @@ package com.ryanlea.fix.chronicle.spec.generate.impl;
 import com.ryanlea.fix.chronicle.Group;
 import com.ryanlea.fix.chronicle.Header;
 import com.ryanlea.fix.chronicle.Message;
+import com.ryanlea.fix.chronicle.Trailer;
 import com.ryanlea.fix.chronicle.spec.*;
 import com.ryanlea.fix.chronicle.spec.generate.SpecJavaGenerator;
 import com.sun.codemodel.*;
@@ -15,9 +16,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.sun.codemodel.JExpr._super;
-import static com.sun.codemodel.JExpr.cast;
-import static com.sun.codemodel.JExpr.lit;
+import static com.sun.codemodel.JExpr.*;
 
 public class CodeModelSpecJavaGenerator implements SpecJavaGenerator {
 
@@ -54,7 +53,7 @@ public class CodeModelSpecJavaGenerator implements SpecJavaGenerator {
 
             generateFields(fixSpec, codeModel, versionPackage);
             generateHeader(fixSpec, codeModel, versionPackage);
-
+            generateTrailer(fixSpec, codeModel, versionPackage);
             generateMessages(fixSpec, codeModel, versionPackage);
         } catch (JClassAlreadyExistsException e) {
             log.error("Cannot create spec class, it already exists.", e);
@@ -78,6 +77,12 @@ public class CodeModelSpecJavaGenerator implements SpecJavaGenerator {
             JDefinedClass messageClass = codeModel._class(versionPackage + '.' +  messageDefinition.getName());
             messageClass._extends(Message.class);
 
+            JMethod messageConstructor = messageClass.constructor(JMod.PUBLIC);
+            JVar messageDefinitionVar = messageConstructor.param(MessageDefinition.class, "messageDefinition");
+            JVar headerVar = messageConstructor.param(Header.class, "header");
+            JVar trailerVar = messageConstructor.param(Trailer.class, "trailer");
+            messageConstructor.body().invoke("super").arg(messageDefinitionVar).arg(headerVar).arg(trailerVar);
+
             Iterable<? extends FieldReference> fieldReferences = messageDefinition.getFieldReferences();
 
             for (FieldReference messageFieldReference : fieldReferences) {
@@ -85,6 +90,10 @@ public class CodeModelSpecJavaGenerator implements SpecJavaGenerator {
                     GroupDefinition groupDefinition = (GroupDefinition) messageFieldReference;
                     JDefinedClass groupClass = messageClass._class(JMod.PUBLIC | JMod.STATIC, messageFieldReference.getName());
                     groupClass._extends(Group.class);
+
+                    JMethod groupConstructor = groupClass.constructor(JMod.PUBLIC);
+                    JVar groupDefinitionVar = groupConstructor.param(GroupDefinition.class, "groupDefinition");
+                    groupConstructor.body().invoke("super").arg(groupDefinitionVar);
 
                     final FieldDefinition fieldDefinition = fixSpec.getFieldDefinition(messageFieldReference);
                     final String getterMethod = generateGetterMethodName(fieldDefinition);
@@ -105,8 +114,25 @@ public class CodeModelSpecJavaGenerator implements SpecJavaGenerator {
         JDefinedClass headerClass = codeModel._class(versionPackage + ".Header");
         headerClass._extends(Header.class);
 
+        JMethod constructor = headerClass.constructor(JMod.PUBLIC);
+        JVar headerDefinitionVar = constructor.param(HeaderDefinition.class, "headerDefinition");
+        constructor.body().invoke("super").arg(headerDefinitionVar);
+
         for (FieldReference fieldReference : fixSpec.getHeaderDefinition().getFieldReferences()) {
             addGetterForFieldReference(fixSpec, headerClass, fieldReference, false);
+        }
+    }
+
+    private void generateTrailer(FixSpec fixSpec, JCodeModel codeModel, String versionPackage) throws JClassAlreadyExistsException {
+        JDefinedClass trailerClass = codeModel._class(versionPackage + ".Trailer");
+        trailerClass._extends(Trailer.class);
+
+        JMethod constructor = trailerClass.constructor(JMod.PUBLIC);
+        JVar trailerDefinitionVar = constructor.param(TrailerDefinition.class, "trailerDefinition");
+        constructor.body().invoke("super").arg(trailerDefinitionVar);
+
+        for (FieldReference fieldReference : fixSpec.getHeaderDefinition().getFieldReferences()) {
+            addGetterForFieldReference(fixSpec, trailerClass, fieldReference, false);
         }
     }
 

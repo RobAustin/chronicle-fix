@@ -19,4 +19,7 @@ public class FieldReference {
         return required;
     }
 
+    public void init(FixSpec fixSpec) {
+        // do nothing
+    }
 }

@@ -6,4 +6,6 @@ public interface EntityDefinition {
 
     boolean hasField(int tag);
 
+    FieldDefinition[] getFieldDefinitions();
+
 }

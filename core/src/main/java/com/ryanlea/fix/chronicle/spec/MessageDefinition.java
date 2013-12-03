@@ -18,6 +18,8 @@ public class MessageDefinition implements EntityDefinition {
 
     private final String category;
 
+    private FieldDefinition[] fieldDefinitions;
+
     public MessageDefinition(String name, String type, String category) {
         this.name = name;
         this.type = type;
@@ -29,15 +31,24 @@ public class MessageDefinition implements EntityDefinition {
     }
 
     public void init(FixSpec fixSpec) {
-        for (FieldReference fieldReference : fields) {
+        fieldDefinitions = new FieldDefinition[fields.size()];
+        for (int i = 0; i < fields.size(); i++) {
+            final FieldReference fieldReference = fields.get(i);
             final FieldDefinition fieldDefinition = fixSpec.getFieldDefinition(fieldReference);
             fieldsByNumber.put(fieldDefinition.getNumber(), fieldDefinition);
+            fieldReference.init(fixSpec);
+            fieldDefinitions[i] = fieldDefinition;
         }
     }
 
     @Override
     public boolean hasField(int tag) {
         return fieldsByNumber.containsKey(tag);
+    }
+
+    @Override
+    public FieldDefinition[] getFieldDefinitions() {
+        return fieldDefinitions;
     }
 
     public String getName() {

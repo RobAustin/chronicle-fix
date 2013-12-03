@@ -81,7 +81,11 @@ public class FixSpec {
 
         for (MessageDefinition messageDefinition : messageDefinitions) {
             messageDefinitionsByType.put(messageDefinition.getType().hashCode(), messageDefinition);
+            messageDefinition.init(this);
         }
+
+        headerDefinition.init(this);
+        trailerDefinition.init(this);
     }
 
     public FieldDefinition getFieldDefinition(int tag) {

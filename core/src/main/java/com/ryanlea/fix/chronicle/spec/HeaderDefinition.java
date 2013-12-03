@@ -12,14 +12,19 @@ public class HeaderDefinition implements EntityDefinition {
 
     private final TIntObjectMap<FieldDefinition> fieldsByNumber = new TIntObjectHashMap<>();
 
+    private FieldDefinition[] fieldDefinitions;
+
     public void addFieldReference(FieldReference fieldReference) {
         fields.add(fieldReference);
     }
 
     public void init(FixSpec fixSpec) {
-        for (FieldReference fieldReference : fields) {
+        fieldDefinitions = new FieldDefinition[fields.size()];
+        for (int i = 0; i < fields.size(); i++) {
+            final FieldReference fieldReference = fields.get(i);
             final FieldDefinition fieldDefinition = fixSpec.getFieldDefinition(fieldReference);
             fieldsByNumber.put(fieldDefinition.getNumber(), fieldDefinition);
+            fieldDefinitions[i] = fieldDefinition;
         }
     }
 
@@ -30,5 +35,10 @@ public class HeaderDefinition implements EntityDefinition {
 
     public Iterable<? extends FieldReference> getFieldReferences() {
         return fields;
+    }
+
+    @Override
+    public FieldDefinition[] getFieldDefinitions() {
+        return fieldDefinitions;
     }
 }
