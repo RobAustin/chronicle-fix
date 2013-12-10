@@ -26,9 +26,9 @@ public class SimpleRouterMain {
 
     private static final String basePath = System.getProperty("java.io.tmpdir") + File.separator + "simplerouter-" + System.currentTimeMillis();
 
-    private static final String fixSpecResource = "/specs/fx.fix.spec.xml";
+    private static final String fixSpecResource = "/specs/fix42.spec.xml";
 
-    private static final String fixMessages = "/messages/fix44.msg";
+    private static final String fixMessages = "/messages/fix42.msgs";
 
     public static void main(String[] args) {
         try {
@@ -59,8 +59,9 @@ public class SimpleRouterMain {
 
         String line;
         while ((line = reader.readLine()) != null) {
-            appender.startExcerpt(2048);
-            appender.write(message.getBytes());
+            appender.startExcerpt(6144);
+//            appender.write(message.getBytes());
+            appender.write(line.getBytes());
             appender.finish();
         }
 

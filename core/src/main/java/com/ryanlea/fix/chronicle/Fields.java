@@ -1,6 +1,8 @@
 package com.ryanlea.fix.chronicle;
 
 import com.ryanlea.fix.chronicle.spec.FieldDefinition;
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntCharMap;
 import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.TIntLongMap;
@@ -19,19 +21,35 @@ import org.joda.time.ReadableDateTime;
 
 public abstract class Fields {
 
+    // tag -> string value
     private TIntObjectMap<StringBuilder> strings;
 
+    // tag -> decimal value
     private TIntObjectMap<MutableDecimal> decimals;
 
+    // tag -> int value
     private TIntIntMap ints;
 
+    // tag -> date time value
     private TIntObjectMap<MutableDateTime> dateTimes;
 
+    // tag -> char value
     private TIntCharMap chars;
 
+    // tag -> long value
     private TIntLongMap longs;
 
-    private final StringBuilder timestamp = new StringBuilder();
+    // tag -> boolean value
+    private TIntObjectMap<Boolean> booleans;
+
+    // group tag -> group
+    private TIntObjectMap<Group> groups;
+
+    // each fid within a component is mapped to said component
+    private TIntObjectMap<Component> components;
+
+    // whether a tag exists
+    private TIntList fields;
 
     protected Fields(FieldDefinition[] fieldDefinitions) {
         // use the field definitions to make some guesses around sizes of the data types
@@ -41,6 +59,10 @@ public abstract class Fields {
         dateTimes = new TIntObjectHashMap<>();
         chars = new TIntCharHashMap();
         longs = new TIntLongHashMap();
+        booleans = new TIntObjectHashMap<>();
+        groups = new TIntObjectHashMap<>();
+        fields = new TIntArrayList();
+        components = new TIntObjectHashMap<>();
     }
 
 
@@ -68,6 +90,17 @@ public abstract class Fields {
         return longs.get(fid);
     }
 
+    protected Group _group(int fid) {
+        return groups.get(fid);
+    }
+
+    protected void _group(int fid, Group group) {
+        groups.put(fid, group);
+    }
+
+    protected void _component(int fid, Component component) {
+        components.put(fid, component);
+    }
 
     public void parseString(int tag, Bytes bytes, StopCharTester stopCharTester) {
         StringBuilder builder = strings.get(tag);
@@ -76,18 +109,22 @@ public abstract class Fields {
             strings.put(tag, builder);
         }
         bytes.parseUTF(builder, stopCharTester);
+        fields.add(tag);
     }
 
     public void parseChar(int tag, Bytes bytes) {
         chars.put(tag, (char) bytes.readByte());
+        fields.add(tag);
     }
 
     public void parseInt(int tag, Bytes bytes) {
         ints.put(tag, (int) bytes.parseLong());
+        fields.add(tag);
     }
 
     public void parseLong(int tag, Bytes bytes) {
         longs.put(tag, bytes.parseLong());
+        fields.add(tag);
     }
 
     public void parseDecimal(int tag, Bytes bytes) {
@@ -97,6 +134,7 @@ public abstract class Fields {
             decimals.put(tag, decimal);
         }
         bytes.parseDecimal(decimal);
+        fields.add(tag);
     }
 
     public void parseUTCTimestamp(int tag, Bytes bytes) {
@@ -107,7 +145,7 @@ public abstract class Fields {
         }
 
         // This entire method is a bit naff but I needed something.  I'm sure there's a much better way to parse a
-        // UTC Timestamp that doesn't create loads of garbage - at 10pm, I'm not sure what that is
+        // UTC Timestamp - at 10pm, I'm not sure what that is
         int yyyy = parse(bytes, 4);
         int MM = parse(bytes, 2);
         int dd = parse(bytes, 2);
@@ -131,6 +169,8 @@ public abstract class Fields {
         mutableDateTime.setMinuteOfHour(mm);
         mutableDateTime.setSecondOfMinute(ss);
         mutableDateTime.setMillisOfSecond(SSS);
+
+        fields.add(tag);
     }
 
     private int parse(Bytes bytes, int length) {
@@ -140,5 +180,21 @@ public abstract class Fields {
             result = result * 10 + b - '0';
         }
         return result;
+    }
+
+    public boolean exists(int tag) {
+        return fields.contains(tag);
+    }
+
+    public Group getGroup(int tag) {
+        return groups.get(tag);
+    }
+
+    public Component getComponent(int tag) {
+        return components.get(tag);
+    }
+
+    public void parseBoolean(int tag, Bytes bytes) {
+        booleans.put(tag, bytes.parseBoolean(StopCharTesters.FIX_TEXT));
     }
 }

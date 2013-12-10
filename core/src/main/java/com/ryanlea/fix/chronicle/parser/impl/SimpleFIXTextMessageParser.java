@@ -1,6 +1,8 @@
 package com.ryanlea.fix.chronicle.parser.impl;
 
+import com.ryanlea.fix.chronicle.Component;
 import com.ryanlea.fix.chronicle.Fields;
+import com.ryanlea.fix.chronicle.Group;
 import com.ryanlea.fix.chronicle.Message;
 import com.ryanlea.fix.chronicle.parser.MessageParser;
 import com.ryanlea.fix.chronicle.pool.MessagePool;
@@ -17,8 +19,6 @@ public class SimpleFIXTextMessageParser implements MessageParser {
 
     private final StringBuilder messageType = new StringBuilder();
 
-    private final StringBuilder utcTimeStamp = new StringBuilder();
-
     private final StringInterner messageTypeInterner = new StringInterner(13);
 
     public SimpleFIXTextMessageParser(FixSpec fixSpec, MessagePool messagePool) {
@@ -33,13 +33,6 @@ public class SimpleFIXTextMessageParser implements MessageParser {
         parseFields(fixSpec.getHeaderDefinition(), message.getHeader(), bytes);
         parseFields(messageDefinition, message, bytes);
         parseFields(fixSpec.getTrailerDefinition(), message.getTrailer(), bytes);
-        while (bytes.remaining() > 0) {
-            long tag = bytes.parseLong();
-
-            FieldDefinition fieldDefinition = fixSpec.getFieldDefinition((int)tag);
-
-
-        }
         return message;
     }
 
@@ -47,8 +40,8 @@ public class SimpleFIXTextMessageParser implements MessageParser {
         while (bytes.remaining() > 0) {
             long position = bytes.position();
             int tag = (int) bytes.parseLong();
-            if (specDefinition.hasField(tag)) {
-                final FieldDefinition fieldDefinition = fixSpec.getFieldDefinition((int)tag);
+            if (specDefinition.hasField(tag) && !fields.exists(tag)) {
+                final FieldDefinition fieldDefinition = fixSpec.getFieldDefinition(tag);
                 final FieldType type = fieldDefinition.getType();
                 switch(type) {
                     case STRING:
@@ -61,22 +54,34 @@ public class SimpleFIXTextMessageParser implements MessageParser {
                     case LENGTH:
                         fields.parseInt(tag, bytes);
                         break;
+                    case PRICE:
                     case QTY:
                         fields.parseDecimal(tag, bytes);
                         break;
-                    case SEQ_NUM:
+                    case SEQNUM:
                         fields.parseLong(tag, bytes);
                         break;
-                    case U_T_C_TIMESTAMP:
+                    case UTCTIMESTAMP:
                         fields.parseUTCTimestamp(tag, bytes);
                         break;
-                    case NUM_IN_GROUP:
+                    case NUMINGROUP:
+                        long numInGroup = bytes.parseLong();
+                        Group group = fields.getGroup(tag);
+                        for (int i = 0; i < numInGroup; i++) {
+                            parseFields(group.getGroupDefinition(), group.getFields(i), bytes);
+                        }
+                        break;
+                    case BOOLEAN:
+                        fields.parseBoolean(tag, bytes);
                         break;
                     default:
                         // this is me being lazy and not handling all cases - will come back to it
                         throw new IllegalStateException("Unexpected type: " + type);
                 }
                 bytes.stepBackAndSkipTo(StopCharTesters.FIX_TEXT);
+            } else if (specDefinition.embedsField(tag)) {
+                Component component = fields.getComponent(tag);
+                parseFields(component.getComponentDefinition(), component, bytes);
             } else {
                 bytes.position(position);
                 return;

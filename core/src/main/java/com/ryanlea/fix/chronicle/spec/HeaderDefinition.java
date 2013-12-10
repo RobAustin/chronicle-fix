@@ -18,6 +18,12 @@ public class HeaderDefinition implements EntityDefinition {
         fields.add(fieldReference);
     }
 
+    @Override
+    public void addComponentReference(ComponentReference componentReference) {
+        // Is this actually correct?
+        throw new UnsupportedOperationException("Cannot add components to the header.");
+    }
+
     public void init(FixSpec fixSpec) {
         fieldDefinitions = new FieldDefinition[fields.size()];
         for (int i = 0; i < fields.size(); i++) {
@@ -40,5 +46,15 @@ public class HeaderDefinition implements EntityDefinition {
     @Override
     public FieldDefinition[] getFieldDefinitions() {
         return fieldDefinitions;
+    }
+
+    @Override
+    public GroupDefinition getGroupDefinition(int tag) {
+        throw new UnsupportedOperationException("Headers cannot contain groups.");
+    }
+
+    @Override
+    public boolean embedsField(int tag) {
+        return false;
     }
 }

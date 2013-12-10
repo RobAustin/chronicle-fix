@@ -1,7 +1,7 @@
 package com.ryanlea.fix.chronicle.spec.parser.impl;
 
-import com.ryanlea.fix.chronicle.spec.parser.FixSpecParser;
 import com.ryanlea.fix.chronicle.spec.*;
+import com.ryanlea.fix.chronicle.spec.parser.FixSpecParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,10 +22,13 @@ public class StaxFixSpecParser implements FixSpecParser {
         elementHandlers.put("fix", new FixElementHandler());
         elementHandlers.put("header", new HeaderElementHandler());
         elementHandlers.put("trailer", new TrailerElementHandler());
+        elementHandlers.put("fields", new FieldsElementHandler());
         elementHandlers.put("field", new FieldElementHandler());
         elementHandlers.put("message", new MessageElementHandler());
         elementHandlers.put("group", new GroupElementHandler());
         elementHandlers.put("value", new ValueElementHandler());
+        elementHandlers.put("components", new ComponentsElementHandler());
+        elementHandlers.put("component", new ComponentElementHandler());
     }
 
     public FixSpec parse(InputStream inputStream) {
@@ -148,7 +151,7 @@ public class StaxFixSpecParser implements FixSpecParser {
             String requiredValue = reader.getAttributeValue(null, "required");
             boolean required = requiredValue != null && "Y".equals(requiredValue);
 
-            if (number != null && !number.trim().isEmpty()) {
+            if (context.fieldDefinitions()) {
                 // handle as a FieldDefinition
                 String type = reader.getAttributeValue(null, "type");
                 FieldDefinition fieldDefinition = new FieldDefinition(Integer.parseInt(number), name, FieldType.fromString(type));
@@ -201,7 +204,7 @@ public class StaxFixSpecParser implements FixSpecParser {
         }
 
         public void handleEnd(ParsingContext context) {
-            //To change body of implemented methods use File | Settings | File Templates.
+
         }
     }
 
@@ -242,5 +245,81 @@ public class StaxFixSpecParser implements FixSpecParser {
             }
             return null;
         }
+
+        public boolean fieldDefinitions() {
+            final Object peek = stack.peek();
+            return peek != null && peek.getClass().equals(DefineFields.class);
+        }
+
+        public boolean componentDefinitions() {
+            final Object peek = stack.peek();
+            return peek != null && peek.getClass().equals(DefineComponents.class);
+        }
+    }
+
+    private static class FieldsElementHandler implements ElementHandler {
+
+        @Override
+        public void handleStart(ParsingContext context) {
+            context.push(new DefineFields());
+        }
+
+        @Override
+        public void handleEnd(ParsingContext context) {
+            context.popIf(DefineFields.class);
+        }
+    }
+
+    private static class ComponentsElementHandler implements ElementHandler {
+        @Override
+        public void handleStart(ParsingContext context) {
+            context.push(new DefineComponents());
+        }
+
+        @Override
+        public void handleEnd(ParsingContext context) {
+            context.popIf(DefineComponents.class);
+        }
+    }
+
+    private static class ComponentElementHandler implements ElementHandler {
+
+        @Override
+        public void handleStart(ParsingContext context) {
+            final XMLStreamReader reader = context.reader;
+            String name = reader.getAttributeValue(null, "name");
+
+            if (context.componentDefinitions()) {
+                // handle as a component definition
+                String type = reader.getAttributeValue(null, "type");
+                ComponentDefinition componentDefinition = new ComponentDefinition(name);
+                context.fixSpec.addComponentDefinition(componentDefinition);
+                context.push(componentDefinition);
+            } else {
+                // handle as a component refernce
+                String requiredValue = reader.getAttributeValue(null, "required");
+                boolean required = requiredValue != null && "Y".equals(requiredValue);
+
+                ComponentReference fieldReference = new ComponentReference(name, required);
+
+                EntityDefinition entityDefinition = context.peek(EntityDefinition.class);
+                entityDefinition.addComponentReference(fieldReference);
+            }
+
+        }
+
+        @Override
+        public void handleEnd(ParsingContext context) {
+            context.popIf(ComponentDefinition.class);
+        }
+    }
+
+    // Purely a placeholder
+    private static class DefineComponents {
+
+    }
+
+    private static class DefineFields {
+
     }
 }

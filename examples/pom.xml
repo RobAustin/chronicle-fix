@@ -43,7 +43,7 @@
                 </executions>
                 <configuration>
                     <basePackage>com.ryanlea.fix.examples</basePackage>
-                    <fixSpecFile>src\main\resources\specs\fx.fix.spec.xml</fixSpecFile>
+                    <fixSpecFile>src\main\resources\specs\fix42.spec.xml</fixSpecFile>
                 </configuration>
             </plugin>
 

@@ -15,11 +15,14 @@ public class FixSpec {
     private int minor;
     private HeaderDefinition headerDefinition;
     private TrailerDefinition trailerDefinition;
-    private List<FieldDefinition> fieldDefinitions = new ArrayList<FieldDefinition>();
-    private List<MessageDefinition> messageDefinitions = new ArrayList<MessageDefinition>();
-    private TIntObjectMap<MessageDefinition> messageDefinitionsByType = new TIntObjectHashMap();
-    private Map<String, FieldDefinition> fieldDefinitionsByName = new HashMap<String, FieldDefinition>();
-    private TIntObjectMap<FieldDefinition> fieldDefinitionsByNumber = new TIntObjectHashMap<>();
+    private final List<FieldDefinition> fieldDefinitions = new ArrayList<>();
+    private final List<MessageDefinition> messageDefinitions = new ArrayList<>();
+    private final List<ComponentDefinition> componentDefinitions = new ArrayList<>();
+    private final TIntObjectMap<MessageDefinition> messageDefinitionsByType = new TIntObjectHashMap<>();
+    private final Map<String, FieldDefinition> fieldDefinitionsByName = new HashMap<>();
+    private final TIntObjectMap<FieldDefinition> fieldDefinitionsByNumber = new TIntObjectHashMap<>();
+    private final Map<String, ComponentDefinition> componentDefinitionsByName = new HashMap<>();
+    private final Map<String, List<ComponentDefinitionListener>> componentDefinitionListeners = new HashMap<>();
 
     public int getMajor() {
         return major;
@@ -65,6 +68,10 @@ public class FixSpec {
         messageDefinitions.add(messageDefinition);
     }
 
+    public void addComponentDefinition(ComponentDefinition componentDefinition) {
+        componentDefinitions.add(componentDefinition);
+    }
+
     public Iterable<FieldDefinition> getFieldDefinitions() {
         return fieldDefinitions;
     }
@@ -79,13 +86,38 @@ public class FixSpec {
             fieldDefinitionsByNumber.put(fieldDefinition.getNumber(), fieldDefinition);
         }
 
+        for (ComponentDefinition componentDefinition : componentDefinitions) {
+            componentDefinition.init(this);
+            componentDefinitionsByName.put(componentDefinition.getName(), componentDefinition);
+            register(componentDefinition);
+        }
+
         for (MessageDefinition messageDefinition : messageDefinitions) {
-            messageDefinitionsByType.put(messageDefinition.getType().hashCode(), messageDefinition);
             messageDefinition.init(this);
+            messageDefinitionsByType.put(messageDefinition.getType().hashCode(), messageDefinition);
         }
 
         headerDefinition.init(this);
         trailerDefinition.init(this);
+    }
+
+    private void register(ComponentDefinition componentDefinition) {
+        List<ComponentDefinitionListener> componentDefinitionListeners =
+                this.componentDefinitionListeners.get(componentDefinition.getName());
+        if (componentDefinitionListeners != null) {
+            for (int i = 0; i < componentDefinitionListeners.size(); i++) {
+                componentDefinitionListeners.get(i).registered(componentDefinition);
+            }
+        }
+    }
+
+    void subscribe(String name, ComponentDefinitionListener componentDefinitionListener) {
+        List<ComponentDefinitionListener> componentDefinitionListeners = this.componentDefinitionListeners.get(name);
+        if (componentDefinitionListeners == null) {
+            componentDefinitionListeners = new ArrayList<>();
+            this.componentDefinitionListeners.put(name, componentDefinitionListeners);
+        }
+        componentDefinitionListeners.add(componentDefinitionListener);
     }
 
     public FieldDefinition getFieldDefinition(int tag) {
@@ -94,5 +126,13 @@ public class FixSpec {
 
     public MessageDefinition getMessageDefinition(String messageType) {
         return messageDefinitionsByType.get(messageType.hashCode());
+    }
+
+    public ComponentDefinition getComponentDefinition(ComponentReference componentReference) {
+        return componentDefinitionsByName.get(componentReference.getName());
+    }
+
+    public Iterable<? extends ComponentDefinition> getComponentDefinitions() {
+        return componentDefinitions;
     }
 }

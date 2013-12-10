@@ -12,8 +12,6 @@ public abstract class Message extends Fields {
 
     private final Trailer trailer;
 
-    private final TIntObjectMap<Group> groups;
-
     protected Message(MessageDefinition messageDefinition, Header header, Trailer trailer) {
         super(messageDefinition.getFieldDefinitions());
         this.messageDefinition = messageDefinition;
@@ -21,12 +19,6 @@ public abstract class Message extends Fields {
         this.header = header;
         this.trailer = trailer;
 
-        // use the message definition to guesstimate the number of groups required
-        this.groups = new TIntObjectHashMap<>();
-    }
-
-    protected Group _group(int fid) {
-        return groups.get(fid);
     }
 
     public Header getHeader() {

@@ -39,7 +39,7 @@ public abstract class Group {
         return getFields(idx)._decimal(fid);
     }
 
-    private Fields getFields(int idx) {
+    public Fields getFields(int idx) {
         growIfRequired(idx);
         return fields[idx];
     }
@@ -56,6 +56,10 @@ public abstract class Group {
                 fields[i] = new GroupFields(groupDefinition);
             }
         }
+    }
+
+    public GroupDefinition getGroupDefinition() {
+        return groupDefinition;
     }
 
     private static class GroupFields extends Fields {

@@ -1,9 +1,6 @@
 package com.ryanlea.fix.chronicle.spec.generate.impl;
 
-import com.ryanlea.fix.chronicle.Group;
-import com.ryanlea.fix.chronicle.Header;
-import com.ryanlea.fix.chronicle.Message;
-import com.ryanlea.fix.chronicle.Trailer;
+import com.ryanlea.fix.chronicle.*;
 import com.ryanlea.fix.chronicle.spec.*;
 import com.ryanlea.fix.chronicle.spec.generate.SpecJavaGenerator;
 import com.sun.codemodel.*;
@@ -27,8 +24,8 @@ public class CodeModelSpecJavaGenerator implements SpecJavaGenerator {
     static {
         typeMappings.put(FieldType.STRING, new TypeMapping(CharSequence.class, "_string"));
         typeMappings.put(FieldType.LENGTH, new TypeMapping(int.class, "_int"));
-        typeMappings.put(FieldType.U_T_C_TIMESTAMP, new TypeMapping(ReadableInstant.class, "_dateTime"));
-        typeMappings.put(FieldType.SEQ_NUM, new TypeMapping(long.class, "_long"));
+        typeMappings.put(FieldType.UTCTIMESTAMP, new TypeMapping(ReadableInstant.class, "_dateTime"));
+        typeMappings.put(FieldType.SEQNUM, new TypeMapping(long.class, "_long"));
         typeMappings.put(FieldType.CHAR, new TypeMapping(char.class, "_char"));
         typeMappings.put(FieldType.INT, new TypeMapping(int.class, "_int"));
         typeMappings.put(FieldType.QTY, new TypeMapping(Number.class, "_decimal"));
@@ -54,6 +51,7 @@ public class CodeModelSpecJavaGenerator implements SpecJavaGenerator {
             generateFields(fixSpec, codeModel, versionPackage);
             generateHeader(fixSpec, codeModel, versionPackage);
             generateTrailer(fixSpec, codeModel, versionPackage);
+            generateComponents(fixSpec, codeModel, versionPackage);
             generateMessages(fixSpec, codeModel, versionPackage);
         } catch (JClassAlreadyExistsException e) {
             log.error("Cannot create spec class, it already exists.", e);
@@ -62,6 +60,18 @@ public class CodeModelSpecJavaGenerator implements SpecJavaGenerator {
             codeModel.build(destDir);
         } catch (IOException e) {
             log.error("Failed to generate source files to [" + destDir.getAbsolutePath() + "].", e);
+        }
+    }
+
+    private void generateComponents(FixSpec fixSpec, JCodeModel codeModel, String versionPackage) throws JClassAlreadyExistsException {
+        final String componentPackage = versionPackage + ".component";
+        for (ComponentDefinition componentDefinition : fixSpec.getComponentDefinitions()) {
+            JDefinedClass componentClass = codeModel._class(componentPackage + '.' + componentDefinition.getName());
+            componentClass._extends(Component.class);
+
+            JMethod componentConstructor = componentClass.constructor(JMod.PUBLIC);
+            JVar componentDefinitionVar = componentConstructor.param(ComponentDefinition.class, "componentDefinition");
+            componentConstructor.body().invoke("super").arg(componentDefinitionVar);
         }
     }
 
@@ -99,6 +109,12 @@ public class CodeModelSpecJavaGenerator implements SpecJavaGenerator {
                     final String getterMethod = generateGetterMethodName(fieldDefinition);
                     JMethod method = messageClass.method(JMod.PUBLIC, groupClass, getterMethod);
                     method.body()._return(cast(groupClass, _super().invoke("_group").arg(lit(fieldDefinition.getNumber()))));
+
+                    messageConstructor.body().add(_super().invoke("_group")
+                            .arg(lit(fieldDefinition.getNumber()))
+                            .arg(_new(groupClass)
+                                    .arg(messageDefinitionVar.invoke("getGroupDefinition")
+                                    .arg(lit(fieldDefinition.getNumber())))));
 
                     for (FieldReference groupFieldReference : groupDefinition.getFieldReferences()) {
                         addGetterForFieldReference(fixSpec, groupClass, groupFieldReference, true);

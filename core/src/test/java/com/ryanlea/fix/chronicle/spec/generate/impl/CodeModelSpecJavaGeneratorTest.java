@@ -30,7 +30,7 @@ public class CodeModelSpecJavaGeneratorTest {
     @Before
     public void init() {
         fixSpecParser = new StaxFixSpecParser();
-        fixSpec = fixSpecParser.parse(CodeModelSpecJavaGeneratorTest.class.getResourceAsStream("/fx.fix.spec.xml"));
+        fixSpec = fixSpecParser.parse(CodeModelSpecJavaGeneratorTest.class.getResourceAsStream("/fix44.spec.xml"));
     }
 
     @Test

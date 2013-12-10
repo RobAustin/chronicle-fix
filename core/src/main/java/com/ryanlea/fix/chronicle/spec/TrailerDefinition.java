@@ -18,6 +18,12 @@ public class TrailerDefinition implements EntityDefinition {
         fields.add(fieldReference);
     }
 
+    @Override
+    public void addComponentReference(ComponentReference componentReference) {
+        // is this factually correct?
+        throw new UnsupportedOperationException("Cannot add components to the trailer.");
+    }
+
     public void init(FixSpec fixSpec) {
         fieldDefinitions = new FieldDefinition[fields.size()];
         for (int i = 0; i < fields.size(); i++) {
@@ -38,6 +44,16 @@ public class TrailerDefinition implements EntityDefinition {
     @Override
     public FieldDefinition[] getFieldDefinitions() {
         return fieldDefinitions;
+    }
+
+    @Override
+    public GroupDefinition getGroupDefinition(int tag) {
+        throw new UnsupportedOperationException("Trailers cannot contain groups.");
+    }
+
+    @Override
+    public boolean embedsField(int tag) {
+        return false;
     }
 
 }

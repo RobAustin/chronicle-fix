@@ -12,9 +12,9 @@ import static org.junit.Assert.assertThat;
 public class StaxFixSpecParserTest {
 
     @Test
-    public void parseFxSpotStream() {
+    public void parseSpec() {
         StaxFixSpecParser parser = new StaxFixSpecParser();
-        InputStream inputStream = StaxFixSpecParserTest.class.getResourceAsStream("/fx.fix.spec.xml");
+        InputStream inputStream = StaxFixSpecParserTest.class.getResourceAsStream("/fix44.spec.xml");
         FixSpec fixSpec = parser.parse(inputStream);
         assertThat(fixSpec, notNullValue());
     }
