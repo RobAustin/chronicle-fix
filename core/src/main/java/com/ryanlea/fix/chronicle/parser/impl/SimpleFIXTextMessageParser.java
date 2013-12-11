@@ -30,9 +30,14 @@ public class SimpleFIXTextMessageParser implements MessageParser {
     public Message parse(Bytes bytes) {
         Message message = acquireMessage(bytes);
         MessageDefinition messageDefinition = message.getMessageDefinition();
+        long startTime = System.nanoTime();
         parseFields(fixSpec.getHeaderDefinition(), message.getHeader(), bytes);
+        long endHeader = System.nanoTime();
         parseFields(messageDefinition, message, bytes);
+        long endBody = System.nanoTime();
         parseFields(fixSpec.getTrailerDefinition(), message.getTrailer(), bytes);
+        long endTime = System.nanoTime();
+        System.out.println("Parsed message type [" + message.getMessageDefinition().getType() + "]. Total: [" + (endTime - startTime) + "]ns. Header: [" + (endHeader - startTime) + "]ns. Body: [" + (endBody - endHeader) + "]ns. Trailer: [" + (endTime - endBody) + "]ns.");
         return message;
     }
 

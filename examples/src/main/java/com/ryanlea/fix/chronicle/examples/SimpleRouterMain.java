@@ -32,6 +32,7 @@ public class SimpleRouterMain {
 
     public static void main(String[] args) {
         try {
+            Thread.sleep(10000);
             FixSpecParser fixSpecParser = new StaxFixSpecParser();
             FixSpec fixSpec = fixSpecParser.parse(SimpleRouterMain.class.getResourceAsStream(fixSpecResource));
             MessagePool messagePool = new SimpleMessagePool(fixSpec);

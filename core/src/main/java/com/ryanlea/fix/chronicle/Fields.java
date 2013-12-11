@@ -31,7 +31,7 @@ public abstract class Fields {
     private TIntIntMap ints;
 
     // tag -> date time value
-    private TIntObjectMap<MutableDateTime> dateTimes;
+    private TIntObjectMap<MutableDateTime> utcTimestamps;
 
     // tag -> char value
     private TIntCharMap chars;
@@ -56,13 +56,28 @@ public abstract class Fields {
         strings = new TIntObjectHashMap<>();
         decimals = new TIntObjectHashMap<>();
         ints = new TIntIntHashMap();
-        dateTimes = new TIntObjectHashMap<>();
+        utcTimestamps = new TIntObjectHashMap<>();
         chars = new TIntCharHashMap();
         longs = new TIntLongHashMap();
         booleans = new TIntObjectHashMap<>();
         groups = new TIntObjectHashMap<>();
         fields = new TIntArrayList();
         components = new TIntObjectHashMap<>();
+
+        for (FieldDefinition fieldDefinition : fieldDefinitions) {
+            switch (fieldDefinition.getType()) {
+                case PRICE:
+                case QTY:
+                    decimals.put(fieldDefinition.getNumber(), new MutableDecimal());
+                    break;
+                case UTCTIMESTAMP:
+                    utcTimestamps.put(fieldDefinition.getNumber(), new MutableDateTime(DateTimeZone.UTC));
+                    break;
+                case STRING:
+                    strings.put(fieldDefinition.getNumber(), new StringBuilder());
+                    break;
+            }
+        }
     }
 
 
@@ -79,7 +94,7 @@ public abstract class Fields {
     }
 
     protected ReadableDateTime _dateTime(int fid) {
-        return dateTimes.get(fid);
+        return utcTimestamps.get(fid);
     }
 
     protected char _char(int fid) {
@@ -138,10 +153,10 @@ public abstract class Fields {
     }
 
     public void parseUTCTimestamp(int tag, Bytes bytes) {
-        MutableDateTime mutableDateTime = dateTimes.get(tag);
+        MutableDateTime mutableDateTime = utcTimestamps.get(tag);
         if (mutableDateTime == null) {
             mutableDateTime = new MutableDateTime(DateTimeZone.UTC);
-            dateTimes.put(tag, mutableDateTime);
+            utcTimestamps.put(tag, mutableDateTime);
         }
 
         // This entire method is a bit naff but I needed something.  I'm sure there's a much better way to parse a
