@@ -56,4 +56,14 @@ public class TrailerDefinition implements EntityDefinition {
         return false;
     }
 
+    @Override
+    public ComponentDefinition[] getComponentDefinitions() {
+        throw new UnsupportedOperationException("Trailers cannot contain components.");
+    }
+
+    @Override
+    public ComponentDefinition getComponentDefinition(String name) {
+        throw new UnsupportedOperationException("Trailers cannot contain components.");
+    }
+
 }

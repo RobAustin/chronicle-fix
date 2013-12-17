@@ -26,9 +26,9 @@ public class SimpleRouterMain {
 
     private static final String basePath = System.getProperty("java.io.tmpdir") + File.separator + "simplerouter-" + System.currentTimeMillis();
 
-    private static final String fixSpecResource = "/specs/fix42.spec.xml";
+    private static final String fixSpecResource = "/specs/fix44.spec.xml";
 
-    private static final String fixMessages = "/messages/fix42.msgs";
+    private static final String fixMessages = "/messages/fix44.msgs";
 
     public static void main(String[] args) {
         try {

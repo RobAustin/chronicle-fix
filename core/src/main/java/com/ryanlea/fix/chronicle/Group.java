@@ -1,7 +1,7 @@
 package com.ryanlea.fix.chronicle;
 
+import com.ryanlea.fix.chronicle.lang.MutableDateTime;
 import com.ryanlea.fix.chronicle.spec.GroupDefinition;
-import org.joda.time.ReadableDateTime;
 
 public abstract class Group {
 
@@ -31,13 +31,19 @@ public abstract class Group {
         return getFields(idx)._char(fid);
     }
 
-    protected ReadableDateTime _dateTime(int idx, int fid) {
+    protected MutableDateTime _dateTime(int idx, int fid) {
         return getFields(idx)._dateTime(fid);
     }
 
     protected Number _decimal(int idx, int fid) {
         return getFields(idx)._decimal(fid);
     }
+
+    protected Component _component(int idx, String name) {
+        return getFields(idx)._component(name);
+    }
+
+    protected abstract Component[] createComponents();
 
     public Fields getFields(int idx) {
         growIfRequired(idx);
@@ -54,6 +60,10 @@ public abstract class Group {
 
             for (int i = previousLength; i < fields.length; i++) {
                 fields[i] = new GroupFields(groupDefinition);
+                Component[] components = createComponents();
+                for (int j = 0; j < components.length; j++) {
+                    fields[i]._component(components[j]);
+                }
             }
         }
     }

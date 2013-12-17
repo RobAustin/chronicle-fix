@@ -28,4 +28,8 @@ public interface EntityDefinition {
      * @return
      */
     boolean embedsField(int tag);
+
+    ComponentDefinition[] getComponentDefinitions();
+
+    ComponentDefinition getComponentDefinition(String name);
 }

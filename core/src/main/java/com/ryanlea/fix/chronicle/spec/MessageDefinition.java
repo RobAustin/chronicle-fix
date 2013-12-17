@@ -16,7 +16,7 @@ public class MessageDefinition implements EntityDefinition {
 
     private final TIntObjectMap<FieldReference> fieldReferencesByNumber = new TIntObjectHashMap<>();
 
-    private final List<ComponentDefinition> componentDefinitions = new ArrayList<>();
+    private final TIntObjectMap<ComponentDefinition> componentDefinitionsByName = new TIntObjectHashMap<>();
 
     private final String name;
 
@@ -25,6 +25,8 @@ public class MessageDefinition implements EntityDefinition {
     private final String category;
 
     private FieldDefinition[] fieldDefinitions;
+
+    private ComponentDefinition[] componentDefinitions;
 
     public MessageDefinition(String name, String type, String category) {
         this.name = name;
@@ -52,10 +54,12 @@ public class MessageDefinition implements EntityDefinition {
             fieldReferencesByNumber.put(fieldDefinition.getNumber(), fieldReference);
         }
 
+        componentDefinitions = new ComponentDefinition[components.size()];
         for (int i = 0; i < components.size(); i++) {
             final ComponentReference componentReference = components.get(i);
             final ComponentDefinition componentDefinition = fixSpec.getComponentDefinition(componentReference);
-            componentDefinitions.add(componentDefinition);
+            componentDefinitions[i] = componentDefinition;
+            componentDefinitionsByName.put(componentDefinition.getName().hashCode(), componentDefinition);
         }
     }
 
@@ -74,10 +78,18 @@ public class MessageDefinition implements EntityDefinition {
         return (GroupDefinition) fieldReferencesByNumber.get(tag);
     }
 
+    public ComponentDefinition[] getComponentDefinitions() {
+        return componentDefinitions;
+    }
+
+    public ComponentDefinition getComponentDefinition(String name) {
+        return componentDefinitionsByName.get(name.hashCode());
+    }
+
     @Override
     public boolean embedsField(int tag) {
-        for (int i = 0; i < componentDefinitions.size(); i++) {
-            final ComponentDefinition componentDefinition = componentDefinitions.get(i);
+        for (int i = 0; i < componentDefinitions.length; i++) {
+            final ComponentDefinition componentDefinition = componentDefinitions[i];
             if (componentDefinition.hasField(tag) || componentDefinition.embedsField(tag)) {
                 return true;
             }

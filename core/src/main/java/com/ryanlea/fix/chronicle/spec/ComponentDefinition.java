@@ -18,7 +18,9 @@ public class ComponentDefinition implements EntityDefinition {
 
     private final TIntObjectMap<FieldDefinition> fieldsByNumber = new TIntObjectHashMap<>();
 
-    private final List<ComponentDefinition> componentDefinitions = new ArrayList<>();
+    private final TIntObjectMap<ComponentDefinition> componentDefinitionsByName = new TIntObjectHashMap<>();
+
+    private ComponentDefinition[] componentDefinitions;
 
     private FieldDefinition[] fieldDefinitions;
 
@@ -52,9 +54,23 @@ public class ComponentDefinition implements EntityDefinition {
     }
 
     @Override
+    public ComponentDefinition[] getComponentDefinitions() {
+        return componentDefinitions;
+    }
+
+    @Override
+    public ComponentDefinition getComponentDefinition(String name) {
+        return componentDefinitionsByName.get(name.hashCode());
+    }
+
+    public Iterable<? extends FieldReference> getFieldReferences() {
+        return fields;
+    }
+
+    @Override
     public boolean embedsField(int tag) {
-        for (int i = 0; i < componentDefinitions.size(); i++) {
-            final ComponentDefinition componentDefinition = componentDefinitions.get(i);
+        for (int i = 0; i < componentDefinitions.length; i++) {
+            final ComponentDefinition componentDefinition = componentDefinitions[i];
             if (componentDefinition.hasField(tag) || componentDefinition.embedsField(tag)) {
                 return true;
             }
@@ -76,17 +92,22 @@ public class ComponentDefinition implements EntityDefinition {
             fieldReferencesByNumber.put(fieldDefinition.getNumber(), fieldReference);
         }
 
-        for (ComponentReference componentReference : components) {
+        componentDefinitions = new ComponentDefinition[components.size()];
+        for (int i = 0; i < components.size(); i++) {
+            final int idx = i;
+            ComponentReference componentReference = components.get(i);
             ComponentDefinition componentDefinition = fixSpec.getComponentDefinition(componentReference);
             if (componentDefinition == null) {
                 fixSpec.subscribe(componentReference.getName(), new ComponentDefinitionListener() {
                     @Override
                     public void registered(ComponentDefinition componentDefinition) {
-                        componentDefinitions.add(componentDefinition);
+                        componentDefinitions[idx] = componentDefinition;
+                        componentDefinitionsByName.put(componentDefinition.getName().hashCode(), componentDefinition);
                     }
                 });
             } else {
-                componentDefinitions.add(componentDefinition);
+                componentDefinitions[i] = componentDefinition;
+                componentDefinitionsByName.put(componentDefinition.getName().hashCode(), componentDefinition);
             }
         }
     }

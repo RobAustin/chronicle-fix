@@ -57,4 +57,14 @@ public class HeaderDefinition implements EntityDefinition {
     public boolean embedsField(int tag) {
         return false;
     }
+
+    @Override
+    public ComponentDefinition[] getComponentDefinitions() {
+        throw new UnsupportedOperationException("Headers cannot contain components.");
+    }
+
+    @Override
+    public ComponentDefinition getComponentDefinition(String name) {
+        throw new UnsupportedOperationException("Headers cannot contain components.");
+    }
 }

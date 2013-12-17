@@ -16,9 +16,11 @@ public class GroupDefinition extends FieldReference implements EntityDefinition 
 
     private final List<ComponentReference> components = new ArrayList<>();
 
-    private final List<ComponentDefinition> componentDefinitions = new ArrayList<>();
+    private final TIntObjectMap<ComponentDefinition> componentDefinitionsByName = new TIntObjectHashMap<>();
 
     private FieldDefinition[] fieldDefinitions;
+
+    private ComponentDefinition[] componentDefinitions;
 
     public GroupDefinition(String name, boolean required) {
         super(name, required);
@@ -34,10 +36,12 @@ public class GroupDefinition extends FieldReference implements EntityDefinition 
             fieldReferencesByNumber.put(fieldDefinition.getNumber(), fieldReference);
         }
 
+        componentDefinitions = new ComponentDefinition[components.size()];
         for (int i = 0; i < components.size(); i++) {
             final ComponentReference componentReference = components.get(i);
             final ComponentDefinition componentDefinition = fixSpec.getComponentDefinition(componentReference);
-            componentDefinitions.add(componentDefinition);
+            componentDefinitions[i] = componentDefinition;
+            componentDefinitionsByName.put(componentDefinition.getName().hashCode(), componentDefinition);
         }
     }
 
@@ -67,13 +71,23 @@ public class GroupDefinition extends FieldReference implements EntityDefinition 
 
     @Override
     public boolean embedsField(int tag) {
-        for (int i = 0; i < componentDefinitions.size(); i++) {
-            final ComponentDefinition componentDefinition = componentDefinitions.get(i);
+        for (int i = 0; i < componentDefinitions.length; i++) {
+            final ComponentDefinition componentDefinition = componentDefinitions[i];
             if (componentDefinition.hasField(tag) || componentDefinition.embedsField(tag)) {
                 return true;
             }
         }
         return false;
+    }
+
+    @Override
+    public ComponentDefinition[] getComponentDefinitions() {
+        return componentDefinitions;
+    }
+
+    @Override
+    public ComponentDefinition getComponentDefinition(String name) {
+        return componentDefinitionsByName.get(name.hashCode());
     }
 
     public Iterable<? extends FieldReference> getFieldReferences() {

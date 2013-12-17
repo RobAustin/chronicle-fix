@@ -50,6 +50,7 @@ public class SimpleFIXTextMessageParser implements MessageParser {
                 final FieldType type = fieldDefinition.getType();
                 switch(type) {
                     case STRING:
+                    case CURRENCY:
                         fields.parseString(tag, bytes, StopCharTesters.FIX_TEXT);
                         break;
                     case CHAR:
@@ -61,6 +62,8 @@ public class SimpleFIXTextMessageParser implements MessageParser {
                         break;
                     case PRICE:
                     case QTY:
+                    case PERCENTAGE:
+                    case AMT:
                         fields.parseDecimal(tag, bytes);
                         break;
                     case SEQNUM:
@@ -79,6 +82,9 @@ public class SimpleFIXTextMessageParser implements MessageParser {
                     case BOOLEAN:
                         fields.parseBoolean(tag, bytes);
                         break;
+                    case LOCALMKTDATE:
+                        fields.parseDate(tag, bytes);
+                        break;
                     default:
                         // this is me being lazy and not handling all cases - will come back to it
                         throw new IllegalStateException("Unexpected type: " + type);
@@ -86,6 +92,7 @@ public class SimpleFIXTextMessageParser implements MessageParser {
                 bytes.stepBackAndSkipTo(StopCharTesters.FIX_TEXT);
             } else if (specDefinition.embedsField(tag)) {
                 Component component = fields.getComponent(tag);
+                bytes.position(position);
                 parseFields(component.getComponentDefinition(), component, bytes);
             } else {
                 bytes.position(position);
